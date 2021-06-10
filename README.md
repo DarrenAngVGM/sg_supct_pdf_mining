@@ -9,8 +9,10 @@ Unfortunately, this program only works on judgments published in the latest form
 
 TL;DR, WHAT DOES WHAT:
 - extract_text.py contains functions that extract text from the Sup Ct judgment PDFs, break the text down into sentences, and write the sentences into .txt files;
-- supct_trawler.py runs a trawler algorithm on the Supreme Court judgments page, and downloads all the PDFs into a local folder;
+- supct_scraper.py runs a web-scraping algorithm on the Supreme Court judgments page, and downloads all the PDFs into a local folder;
 - section_searcher.py contains one possible use case for the .txt files; it uses a regex to find all statute citations by section number, and returns a .csv containing all the matches. 
+
+WARNING: DO NOT REMOVE THE 5 SECOND WAIT IN SUPCT_SCRAPER.PY. THIS MAY RESULT IN A DDOS ATTACK, WHICH ATTRACTS CRIMINAL LIABILITY UNDER THE SECTION 7 OF THE COMPUTER MISUSE ACT.
 
 ~
 
