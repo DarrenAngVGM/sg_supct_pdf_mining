@@ -16,6 +16,7 @@ def ExtractTextIntoDict(pdf_file_path):
     f = pdf_file_path.open(mode="rb")
     reader = PyPDF2.PdfFileReader(f)
     n_pages = reader.getNumPages()
+    print(f"\nExtracting text from {pdf_file_path}:")
 
     # Extract all text into a dict, in the format: {page no (int): text (str)}
     text = {page_num: "" for page_num in range(n_pages)}
@@ -80,9 +81,7 @@ def RemoveHeadersFromText(text, cite):
             page_text = text.get(page)
             text[page] = page_text.replace(header_std_text, "")
 
-        return text
-    else:
-        return text
+    return text
 
 
 def FindStartOfText(text):
