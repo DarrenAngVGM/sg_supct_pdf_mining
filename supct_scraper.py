@@ -97,8 +97,11 @@ while True:
         log_df = log_df.append(log_row, ignore_index=True)
         last_page_num = slug.rsplit("/", 1)[1]
         date_now = date.today().strftime("%m%d%y")
-        log_df.to_csv(f"download log {date_now} - last accessed page no {last_page_num}.csv", encoding="utf-8-sig")
 
+        # Saves the log to a csv, removes the earlier csv if it exists
+        log_df.to_csv(f"download log {date_now} - last accessed page no {last_page_num}.csv", encoding="utf-8-sig")
+        (Path.cwd() / f"download log {date_now} - last accessed page no {int(last_page_num) - 1}.csv").unlink(
+            missing_ok=True)
 
     # Prints success message and logs last-downloaded page
     print(f"All cases from page {current_page} extracted. Will attempt to access next page.")
