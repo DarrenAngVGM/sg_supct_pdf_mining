@@ -81,7 +81,7 @@ def FindStartOfText(text):
 
     If the start point cannot be found, the function returns (0,0), and none of the text will be removed.
     """
-    justice_intro = re.compile("J[A-Z]*( .*)?: ")
+    justice_intro = re.compile("J[A-Z]*( .*)?:")
     for page_num in text.keys():
         page_text = text.get(page_num)
         search_hit = justice_intro.search(page_text)
@@ -111,6 +111,7 @@ def PreprocessTextToString(text: dict) -> str:
         elif page_num > start_page:
             text_chunks.append(text.get(page_num))
 
+    print("Text has been extracted into one continuous string.")
     return "".join(text_chunks)
 
 
@@ -139,6 +140,7 @@ def SentenceTokenizeText(pdf_file_path):
 
         sentences_cleaned.append(sentence[rm_counter:])
 
+    print("Text has been tokenised into sentences.")
     return sentences_cleaned
 
 
