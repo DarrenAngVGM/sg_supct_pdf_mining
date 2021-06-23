@@ -34,52 +34,41 @@ def ExtractTextIntoDict(pdf_file_path):
     return text
 
 
-def FindCitationFromHeader(text):
+def RemoveHeadersFromText(text):
     """
-    Unreported judgments from the Sup Ct website share a header which contains the casename and citation,
-    but the order of the words is scrambled when they are OCR'd by PyPDF2 (they appear in the order: {Party 1 v} {
-    citation} {Party 2} {pg no}. This function takes a dict of text extracted from the cases (from
-    ExtractTextIntroDict()) and uses the header on the last page and tries all pages backwards until the citation is
-    found.
+    Takes a dict of text extracted from a case pdf (from ExtractTextIntoDict()) and find the common substrings from
+    each page; those are the headers. Also remove the page numbers at the beginning of each page.
 
-    Returns a list in the format: (Party 1, Neutral Citation, Party 2). This will be used to remove the header from
-    other pages.
+    Returns the dict of text without the headers.
     """
-    pg_ptr = len(text.keys()) - 1  # Starts on last page and works backwards
-    scrambled_regex = re.compile("(.+) v (\[\d\d\d\d] SG\w\w \d+) (.+) \d+")
+    n_pages = len(text.keys())
+    pg_ptr = 0
 
-    while pg_ptr != -1:
-        lastpg_text = text.get(pg_ptr)
+    # Find the first set of matching headers
+    while pg_ptr < (n_pages - 1):
+        page1 = text.get(pg_ptr)
+        page2 = text.get(pg_ptr + 1)
 
-        # It's not always possible to find the citation from the header because OCR messes up.
-        # Therefore, return False if not possible; the code will still carry on.
-        try:
-            search_hits = scrambled_regex.match(lastpg_text).groups()
-            if len(search_hits) == 3:
-                return list(search_hits)
+        slice_point = 0
+        while page1[slice_point] == page2[slice_point]:
+            slice_point += 1
 
-        except AttributeError:
-            pass
+        if slice_point > 11:
+            header = page1[:slice_point]
+            break
 
-        pg_ptr -= 1
+        pg_ptr += 1
 
-    print("Could not extract citation from header due to OCR issues. It will appear in the extracted text.")
-    return False
+    for each_page in range(n_pages - 1):
+        text_copy = text[each_page]
+        text_copy = text_copy.replace(header, "")
 
-
-def RemoveHeadersFromText(text, cite):
-    """
-    Takes a dict of text extracted from a case pdf (from ExtractTextIntoDict()) and a list of the parts of the
-    citation from the headers (from FindCitationFromHeader()), and removes the header from all pages which have it.
-
-    Returns the dict of text without the headers. If citation could not be found, just return the text as is.
-    """
-    if cite is not False:
-        cite.insert(1, "v")
-        header_std_text = " ".join(cite)
-        for page in text.keys():
-            page_text = text.get(page)
-            text[page] = page_text.replace(header_std_text, "")
+        # Remove page numbers if they exist
+        pagenum_rm = re.match("\d+ (.*)", text_copy)
+        if pagenum_rm is not None:
+            text[each_page] = pagenum_rm.groups()[0]
+        else:
+            text[each_page] = text_copy
 
     return text
 
@@ -112,8 +101,7 @@ def PreprocessTextToString(text: dict) -> str:
     """
     text_chunks = list()
 
-    cite = FindCitationFromHeader(text)
-    text_no_headers = RemoveHeadersFromText(text, cite)
+    text_no_headers = RemoveHeadersFromText(text)
     start_page, start_pos = FindStartOfText(text_no_headers)
 
     # Only keep text from pages above the start page. If on start page, only keep text after start position.
