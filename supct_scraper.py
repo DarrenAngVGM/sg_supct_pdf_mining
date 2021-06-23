@@ -1,6 +1,8 @@
 """
-Runs through the Sup Ct website judgments page, downloads all full judgment PDFs and keeps a log of the casenames and
-filenames of the judgments extracted."""
+Runs through the Sup Ct website judgments page, downloads all full judgment PDFs and keeps a log of the casenames,
+citations and filenames of the judgments extracted. Will not extract a judgment if it already exists in the
+"downloaded_pdfs" folder.
+"""
 
 from time import sleep
 from datetime import date
@@ -59,9 +61,12 @@ while True:
         keywords_tag, casename_str, citation_tag = text_contents[1], text_contents[2], text_contents[3]
 
         # Keywords: is a bs4 Tag; remove additional spaces from beginning and end
-        keywords_lsplit = keywords_tag.text.split("[", 1)[1]
-        keywords_rsplit = keywords_lsplit.rsplit("]", 1)[0]
-        log_row["keywords"] = "[" + keywords_rsplit + "]"
+        try:
+            keywords_lsplit = keywords_tag.text.split("[", 1)[1]
+            keywords_rsplit = keywords_lsplit.rsplit("]", 1)[0]
+            log_row["keywords"] = "[" + keywords_rsplit + "]"
+        except IndexError:
+            log_row["keywords"] = keywords_tag.text
 
         # Casename: is a bs4 NavigableString; remove extra spaces at beginning and end
         log_row["casename"] = re.search("\s\s+(.*)\s\s+", casename_str).groups()[0]  # Captures casename as only group
@@ -77,20 +82,23 @@ while True:
         download_slug = download["href"]  # Each anchor tag only has one href attr, extract it
         log_row["filename"] = download_filename = download_slug.rsplit("/", 1)[1]
         newfile = (download_path / download_filename)
-        newfile.touch(exist_ok=True)
 
-        download_url = get("".join([base_url, download_slug]))
-        newfile.write_bytes(download_url.content)
+        if not newfile.is_file():
+            newfile.touch(exist_ok=True)
+            download_url = get("".join([base_url, download_slug]))
+            newfile.write_bytes(download_url.content)
+            print(f"Successfully extracted case into {newfile} and updated case log.")
+
+            sleep(5)  # IMPORTANT. Do not remove, it will probably overload the Sup Ct website servers.
+        else:
+            print(f"File at {newfile} already exists.")
 
         # Updates the log and prints a success message
         log_df = log_df.append(log_row, ignore_index=True)
         last_page_num = slug.rsplit("/", 1)[1]
         date_now = date.today().strftime("%m%d%y")
         log_df.to_csv(f"download log - last accessed page no {last_page_num} on {date_now}.csv", encoding="utf-8-sig")
-        print(f"Successfully extracted case into {newfile} and updated case log.")
 
-        # IMPORTANT. Do not remove, it will probably overload the Sup Ct website servers.
-        sleep(5)
 
     # Prints success message and logs last-downloaded page
     print(f"All cases from page {current_page} extracted. Will attempt to access next page.")
