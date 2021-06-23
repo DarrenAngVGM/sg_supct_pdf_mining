@@ -97,7 +97,7 @@ while True:
         log_df = log_df.append(log_row, ignore_index=True)
         last_page_num = slug.rsplit("/", 1)[1]
         date_now = date.today().strftime("%m%d%y")
-        log_df.to_csv(f"download log - last accessed page no {last_page_num} on {date_now}.csv", encoding="utf-8-sig")
+        log_df.to_csv(f"download log {date_now} - last accessed page no {last_page_num}.csv", encoding="utf-8-sig")
 
 
     # Prints success message and logs last-downloaded page
@@ -106,4 +106,4 @@ while True:
     # Updates slug, gets ready for next request
     next_tag = soup.find("a", title="Next")
     slug = next_tag["href"]
-    sleep(1)
+    sleep(5)
